@@ -32,7 +32,7 @@ namespace AuthServer.API
                 Configuration
                 .GetSection("TokenOption"));
 
-            services.Configure<Client>(
+            services.Configure<List<Client>>(
                 Configuration
                 .GetSection("Clients"));
 
