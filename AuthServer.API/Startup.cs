@@ -1,9 +1,19 @@
-using AppShared.Library.Configuration;
+﻿using AppShared.Library.Configuration;
 using AuthServer.Core.Configuration;
+using AuthServer.Core.Models;
+using AuthServer.Core.Repositories;
+using AuthServer.Core.Services;
+using AuthServer.Core.UnitOfWorks;
+using AuthServer.Data;
+using AuthServer.Data.Repositories;
+using AuthServer.Service.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -32,9 +42,68 @@ namespace AuthServer.API
                 Configuration
                 .GetSection("TokenOption"));
 
+            var tokenOptions = Configuration
+                .GetSection("TokenOption")
+                .Get<CustomTokenOption>();
+
             services.Configure<List<Client>>(
                 Configuration
                 .GetSection("Clients"));
+
+            #region DI Register
+            services.AddSingleton<IAuthenticationService, AuthenticationService>();
+            services.AddSingleton<IUserService, UserService>();
+            services.AddSingleton<ITokenService, TokenService>();
+            services.AddSingleton(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            services.AddSingleton(typeof(IServiceGeneric<,>), typeof(ServiceGeneric<,>));
+            services.AddSingleton<IUnitOfWork, UnitOfWork>();
+            #endregion
+
+            #region DbContext
+            services.AddDbContext<AppDbContext>(options =>
+            {
+                options.UseSqlServer(Configuration.GetConnectionString("SqlServer"), sqlOptions =>
+                {
+                    sqlOptions.MigrationsAssembly("AuthServer.Data");
+                });
+            });
+            #endregion
+
+            #region Identity DbContext
+            services.AddIdentity<UserApp, IdentityRole>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+                options.Password.RequireNonAlphanumeric = false;
+            }).AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
+            #endregion
+
+            #region Authentication Mekanizm
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+
+            }).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+            {
+                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+                {
+                    ValidIssuer = tokenOptions.Issuer,
+                    ValidAudience = tokenOptions.Audience[0],
+                    IssuerSigningKey = SignService.GetSymetricSecurityKey(tokenOptions.SecurityKey),
+
+                    //İmzasını dogruluyoruz.
+                    ValidateIssuerSigningKey = true,
+                    ValidateAudience = true,
+                    ValidateIssuer = true,
+                    ValidateLifetime = true,
+                    //Token'a ömur verdiğimizde  default olarak 5 dk daha ekler
+                    //5dk yı farklı zaman aralıklarındakı serverlara kurabılırsın
+                    //bunu zero olarak verdiğimizde 5 dk lık sureyı 0'a 0 olarak tanımlıyoruz.
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
+            #endregion
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
