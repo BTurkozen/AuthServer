@@ -51,12 +51,12 @@ namespace AuthServer.API
                 .GetSection("Clients"));
 
             #region DI Register
-            services.AddSingleton<IAuthenticationService, AuthenticationService>();
-            services.AddSingleton<IUserService, UserService>();
-            services.AddSingleton<ITokenService, TokenService>();
-            services.AddSingleton(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-            services.AddSingleton(typeof(IServiceGeneric<,>), typeof(ServiceGeneric<,>));
-            services.AddSingleton<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            services.AddScoped(typeof(IServiceGeneric<,>), typeof(ServiceGeneric<,>));
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             #endregion
 
             #region DbContext
