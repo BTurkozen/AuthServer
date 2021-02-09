@@ -12,8 +12,4 @@
     <ProjectReference Include="..\AppShared.Library\AppShared.Library.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>

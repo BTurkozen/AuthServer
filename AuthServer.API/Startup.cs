@@ -1,4 +1,5 @@
 ﻿using AppShared.Library.Configuration;
+using AppShared.Library.Extensions;
 using AppShared.Library.Services;
 using AuthServer.Core.Configuration;
 using AuthServer.Core.Models;
@@ -8,6 +9,7 @@ using AuthServer.Core.UnitOfWorks;
 using AuthServer.Data;
 using AuthServer.Data.Repositories;
 using AuthServer.Service.Services;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -106,7 +108,16 @@ namespace AuthServer.API
             });
             #endregion
 
-            services.AddControllers();
+            services.AddControllers()
+                .AddFluentValidation(
+                options =>
+                {
+                    //butun abstract validatorları bulup işliyor.
+                    options.RegisterValidatorsFromAssemblyContaining<Startup>();
+                });
+
+            services.UserCustomValidationResponse();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "AuthServer.API", Version = "v1" });
@@ -122,6 +133,12 @@ namespace AuthServer.API
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "AuthServer.API v1"));
             }
+            //else
+            //{
+            //    app.UseCutomException();
+            //}
+
+            app.UseCutomException();
 
             app.UseHttpsRedirection();
 
