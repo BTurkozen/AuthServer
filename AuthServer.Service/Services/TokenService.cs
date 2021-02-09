@@ -1,4 +1,5 @@
 ﻿using AppShared.Library.Configuration;
+using AppShared.Library.Services;
 using AuthServer.Core.Configuration;
 using AuthServer.Core.DTOs;
 using AuthServer.Core.Models;

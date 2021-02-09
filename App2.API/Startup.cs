@@ -1,3 +1,5 @@
+using AppShared.Library.Configuration;
+using AppShared.Library.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -27,6 +29,16 @@ namespace App2.API
         public void ConfigureServices(IServiceCollection services)
         {
 
+            services.Configure<CustomTokenOption>(
+               Configuration
+               .GetSection("TokenOption"));
+
+            var tokenOptions = Configuration
+               .GetSection("TokenOption")
+               .Get<CustomTokenOption>();
+
+            services.AddCustomTokenAuth(tokenOptions);
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -47,6 +59,8 @@ namespace App2.API
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseAuthorization();
 
             app.UseAuthorization();
 
